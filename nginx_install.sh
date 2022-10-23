@@ -25,7 +25,7 @@ function error_exit() {
 
 function msg_info() {
     local msg="$1"
-    echo -ne " ${HOLD} ${YW}${msg}..."
+    echo -ne " ${HOLD} ${msg}..."
 }
 
 function msg_ok() {
