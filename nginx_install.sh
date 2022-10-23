@@ -23,22 +23,7 @@ function error_exit() {
   exit $EXIT
 }
 
-function msg_info() {
-    local msg="$1"
-    echo -ne " ${HOLD} ${msg}..."
-}
 
-function msg_ok() {
-    local msg="$1"
-    echo -e "${BFR} ${CM} ${GN}${msg}${CL}"
-}
-
-function msg_error() {
-    local msg="$1"
-    echo -e "${BFR} ${CROSS} ${RD}${msg}${CL}"
-}
-
-msg_info "Installing Dependencies"
 apt-get update &>/dev/null
 apt-get -y install \
     sudo \
@@ -54,9 +39,9 @@ apt-get -y install \
     python3-dev \
     git \
     lsb-release &>/dev/null
-msg_ok "Installed Dependencies"
 
-msg_info "Installing Python"
+
+
   apt-get install -y -q --no-install-recommends python3 python3-pip python3-venv &>/dev/null
   pip3 install --upgrade setuptools &>/dev/null
   pip3 install --upgrade pip &>/dev/null
@@ -65,38 +50,31 @@ msg_info "Installing Python"
     python3 -m pip install --no-cache-dir -U cryptography==3.3.2 &>/dev/null
   fi
   python3 -m pip install --no-cache-dir cffi certbot &>/dev/null
-msg_ok "Installed Python"
 
-msg_info "Installing Openresty"
+
+
 wget -q -O - https://openresty.org/package/pubkey.gpg | apt-key add - &>/dev/null
 codename=`grep -Po 'VERSION="[0-9]+ \(\K[^)]+' /etc/os-release` &>/dev/null
 echo "deb http://openresty.org/package/debian $codename openresty" | tee /etc/apt/sources.list.d/openresty.list &>/dev/null
 apt-get -y update &>/dev/null
 apt-get -y install --no-install-recommends openresty &>/dev/null
-msg_ok "Installed Openresty"
 
-msg_info "Setting up Node.js Repository"
+
 curl -fsSL https://deb.nodesource.com/setup_16.x | bash - &>/dev/null
-msg_ok "Set up Node.js Repository"
 
-msg_info "Installing Node.js"
 apt-get install -y nodejs &>/dev/null
-msg_ok "Installed Node.js"
- 
-msg_info "Installing Yarn"
+
 npm install --global yarn &>/dev/null
-msg_ok "Installed Yarn"
 
 RELEASE=$(curl -s https://api.github.com/repos/NginxProxyManager/nginx-proxy-manager/releases/latest \
 | grep "tag_name" \
 | awk '{print substr($2, 3, length($2)-4) }') \
 
-msg_info "Downloading Nginx Proxy Manager v${RELEASE}"
+
 wget -q https://codeload.github.com/NginxProxyManager/nginx-proxy-manager/tar.gz/v${RELEASE} -O - | tar -xz &>/dev/null
 cd ./nginx-proxy-manager-${RELEASE}
-msg_ok "Downloaded Nginx Proxy Manager v${RELEASE}"
 
-msg_info "Setting up Enviroment"
+
 ln -sf /usr/bin/python3 /usr/bin/python
 ln -sf /usr/bin/certbot /opt/certbot/bin/certbot
 ln -sf /usr/local/openresty/nginx/sbin/nginx /usr/sbin/nginx
@@ -149,18 +127,14 @@ fi
 mkdir -p /app/global /app/frontend/images
 cp -r backend/* /app
 cp -r global/* /app/global
-msg_ok "Set up Enviroment"
 
-msg_info "Building Frontend"
 cd ./frontend
 export NODE_ENV=development
 yarn install --network-timeout=30000 &>/dev/null
 yarn build &>/dev/null
 cp -r dist/* /app/frontend
 cp -r app-images/* /app/frontend/images
-msg_ok "Built Frontend"
 
-msg_info "Initializing Backend"
 rm -rf /app/config/default.json &>/dev/null
 if [ ! -f /app/config/production.json ]; then
 cat << 'EOF' > /app/config/production.json
@@ -180,9 +154,7 @@ fi
 cd /app
 export NODE_ENV=development
 yarn install --network-timeout=30000 &>/dev/null
-msg_ok "Initialized Backend"
 
-msg_info "Creating Service"
 cat << 'EOF' > /lib/systemd/system/npm.service
 [Unit]
 Description=Nginx Proxy Manager
@@ -200,7 +172,7 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 EOF
-msg_ok "Created Service"
+
 
 PASS=$(grep -w "root" /etc/shadow | cut -b6);
   if [[ $PASS != $ ]]; then
@@ -217,16 +189,13 @@ ExecStart=-/sbin/agetty --autologin root --noclear --keep-baud tty%I 115200,3840
 EOF
 systemctl daemon-reload
 systemctl restart $(basename $(dirname $GETTY_OVERRIDE) | sed 's/\.d//')
-msg_ok "Customized Container"
   fi
 
-msg_info "Starting Services"
+
 systemctl enable npm &>/dev/null
 systemctl start openresty
 systemctl start npm
-msg_ok "Started Services"
 
-msg_info "Cleaning up"
 apt-get autoremove >/dev/null
 apt-get autoclean >/dev/null
-msg_ok "Cleaned"
+
