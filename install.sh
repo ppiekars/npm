@@ -11,17 +11,6 @@ set -o errtrace
 set -o nounset
 set -o pipefail
 shopt -s expand_aliases
-alias die='EXIT=$? LINE=$LINENO error_exit'
-trap die ERR
-
-function error_exit() {
-  trap - ERR
-  local reason="Unknown failure occurred."
-  local msg="${1:-$reason}"
-  local flag="${RD}‼ ERROR ${CL}$EXIT@$LINE"
-  echo -e "$flag $msg" 1>&2
-  exit $EXIT
-}
 
 
 apt-get update &>/dev/null
